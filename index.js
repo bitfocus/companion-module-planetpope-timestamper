@@ -74,8 +74,8 @@ instance.prototype.actions = function(system) {
 	var self = this;
 
 	self.setActions({
-		'start': {
-			label: 'Start a New Session'
+		'startSession': {
+			label: 'Start a Session'
 		},
 		'createMarker': {
 			label: 'Create Marker',
@@ -88,8 +88,8 @@ instance.prototype.actions = function(system) {
 				}
 			]
 		},
-		'stop': {
-			label: 'Stop a New Session'
+		'stopSession': {
+			label: 'Stop a Session'
 		}
 	});
 }
@@ -100,11 +100,11 @@ instance.prototype.action = function(action) {
 	const isoDate = new Date(rightNow).toISOString();
 	
 	switch(action.action) {
-		case 'start':
+		case 'startSession':
 			self.startSession(rightNow, isoDate);
 			break;
-		case 'stop':
-			self.stopSession();
+		case 'stopSession':
+			self.stopSession(rightNow, isoDate);
 			break;
 		case 'createMarker':
 			self.createMessage(rightNow, isoDate, action.options.message);
@@ -116,17 +116,16 @@ instance.prototype.action = function(action) {
 
 instance.prototype.createMessage = function(rightNow, isoDate, message) {
 	let self = this;
+	if(self.NOTIONINFO.active === false) {
+		return;
+	}
 
 	const elapsedTime = rightNow - self.NOTIONINFO.startTime;
-	const totalSeconds = Math.round(elapsedTime / 1000);
-	const hours = Math.floor(totalSeconds / 3600);
-	const minutes = Math.floor(totalSeconds / 60);
-	const seconds = totalSeconds % 60;
 	let timestampFmt = "";
-	if(hours !== 0) {
-		timestampFmt = hours.toString().padStart(2,'0')+":"+minutes.toString().padStart(2,'0')+":"+seconds.toString().padStart(2,'0');		
+	if(elapsedTime > 3600000) {
+		timestampFmt = new Date(elapsedTime).toISOString().substring(11, 19);		
 	} else {
-		timestampFmt = minutes.toString().padStart(2,'0')+":"+seconds.toString().padStart(2,'0');
+		timestampFmt = new Date(elapsedTime).toISOString().substring(14, 19);
 	}
 
 	body = JSON.stringify({
@@ -169,6 +168,10 @@ instance.prototype.createMessage = function(rightNow, isoDate, message) {
 instance.prototype.startSession = function(rightNow, isoDate) {
 	let self = this;
 
+	if(self.NOTIONINFO.active === true) {
+		self.stopSession(rightNow,isoDate);
+	}
+	
 	body = JSON.stringify({
 		parent: {
 			type:"page_id",
@@ -204,8 +207,9 @@ instance.prototype.startSession = function(rightNow, isoDate) {
 	self.doRestCall('https://api.notion.com/v1/databases/', body, rightNow, isoDate);
 }
 
-instance.prototype.stopSession = function() {
+instance.prototype.stopSession = function(rightNow, isoDate) {
 	let self = this;
+	self.createMessage(rightNow, isoDate, 'stop');
 	self.NOTIONINFO.active = false;
 	self.NOTIONINFO.databaseId = '';
 	self.NOTIONINFO.startTime = 0;
