@@ -127,7 +127,6 @@ instance.prototype.createMessage = function(rightNow, isoDate, message) {
 	if(self.NOTIONINFO.active === false) {
 		return;
 	}
-	console.log(self.NOTIONINFO);
 	if(self.NOTIONINFO.startTime === 0) {
 		self.NOTIONINFO.startTime = rightNow;
 	}
