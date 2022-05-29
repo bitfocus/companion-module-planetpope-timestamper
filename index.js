@@ -75,7 +75,15 @@ instance.prototype.actions = function(system) {
 
 	self.setActions({
 		'startSession': {
-			label: 'Start a Session'
+			label: 'Start a Session',
+			options: [
+				{
+					type: 'checkbox',
+					id: 'autoCreateStartRecord',
+					label: 'Automatically create start record?',
+					default: false
+				}
+			]
 		},
 		'createMarker': {
 			label: 'Create Marker',
@@ -101,7 +109,7 @@ instance.prototype.action = function(action) {
 	
 	switch(action.action) {
 		case 'startSession':
-			self.startSession(rightNow, isoDate);
+			self.startSession(rightNow, isoDate, action.options.autoCreateStartRecord);
 			break;
 		case 'stopSession':
 			self.stopSession(rightNow, isoDate);
@@ -118,6 +126,10 @@ instance.prototype.createMessage = function(rightNow, isoDate, message) {
 	let self = this;
 	if(self.NOTIONINFO.active === false) {
 		return;
+	}
+	console.log(self.NOTIONINFO);
+	if(self.NOTIONINFO.startTime === 0) {
+		self.NOTIONINFO.startTime = rightNow;
 	}
 
 	const elapsedTime = rightNow - self.NOTIONINFO.startTime;
@@ -162,10 +174,10 @@ instance.prototype.createMessage = function(rightNow, isoDate, message) {
 			}
 		}
 	});
-	self.doRestCall('https://api.notion.com/v1/pages',body, rightNow, isoDate);
+	self.doRestCall('https://api.notion.com/v1/pages',body, rightNow, isoDate, false);
 }
 
-instance.prototype.startSession = function(rightNow, isoDate) {
+instance.prototype.startSession = function(rightNow, isoDate, autoCreateStartRecord) {
 	let self = this;
 
 	if(self.NOTIONINFO.active === true) {
@@ -204,7 +216,7 @@ instance.prototype.startSession = function(rightNow, isoDate) {
 			}
 		}
 	});
-	self.doRestCall('https://api.notion.com/v1/databases/', body, rightNow, isoDate);
+	self.doRestCall('https://api.notion.com/v1/databases/', body, rightNow, isoDate, autoCreateStartRecord);
 }
 
 instance.prototype.stopSession = function(rightNow, isoDate) {
@@ -215,7 +227,7 @@ instance.prototype.stopSession = function(rightNow, isoDate) {
 	self.NOTIONINFO.startTime = 0;
 }
 
-instance.prototype.doRestCall = function(notionUrl, body, rightNow, isoDate) {
+instance.prototype.doRestCall = function(notionUrl, body, rightNow, isoDate, autoCreateStartRecord) {
 	let self = this;
 
 	var extra_headers = [];
@@ -232,9 +244,11 @@ instance.prototype.doRestCall = function(notionUrl, body, rightNow, isoDate) {
 		} else if(result.data.object === 'database') {
 			self.NOTIONINFO.active = true;
 			self.NOTIONINFO.databaseId = result.data.id;
-			self.NOTIONINFO.startTime = rightNow;
 			self.status(self.STATUS_OK);
-			self.createMessage(rightNow, isoDate, 'start');
+			if(autoCreateStartRecord === true) {
+				self.NOTIONINFO.startTime = rightNow;
+				self.createMessage(rightNow, isoDate, 'start');
+			}
 		} else {
 			self.status(self.STATUS_OK);
 		}
