@@ -115,13 +115,13 @@ instance.prototype.action = function(action) {
 	
 	switch(action.action) {
 		case 'startSession':
-			self.startSession(rightNow, isoDate, action.options.autoCreateStartRecord, action.options.databaseName);
+			self.startSession(rightNow, isoDate, action.options.autoCreateStartRecord, action.options.databaseName.trim());
 			break;
 		case 'stopSession':
 			self.stopSession(rightNow, isoDate);
 			break;
 		case 'createMarker':
-			self.createMessage(rightNow, isoDate, action.options.message);
+			self.createMessage(rightNow, isoDate, action.options.message.trim());
 			break;
 		default:
 			break;
@@ -189,21 +189,19 @@ instance.prototype.startSession = function(rightNow, isoDate, autoCreateStartRec
 		self.stopSession(rightNow,isoDate);
 	}
 
-  let dbname = databaseName.trim();
-	
-	if(dbname === '') {
-		dbname = isoDate;
+	if(databaseName === '') {
+		databaseName = isoDate;
 	}
 
 	body = JSON.stringify({
 		parent: {
 			type:"page_id",
-			page_id: self.config.parentPageId,
+			page_id: self.config.parentPageId.trim(),
 		},
 		title:[{
 			type:"text",
 			text:{
-				content:dbname
+				content:databaseName
 			}
 		}],
 		properties: {
@@ -242,7 +240,7 @@ instance.prototype.doRestCall = function(notionUrl, body, rightNow, isoDate, aut
 	let self = this;
 
 	var extra_headers = [];
-	extra_headers['Authorization'] = 'Bearer ' + self.config.apiKey;
+	extra_headers['Authorization'] = 'Bearer ' + self.config.apiKey.trim();
 	extra_headers['Notion-Version'] = '2022-02-22';
 
 	self.system.emit('rest', notionUrl, body, function (err, result) {
