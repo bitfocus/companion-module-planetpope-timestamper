@@ -2,12 +2,6 @@ var instance_skel = require('../../instance_skel');
 var debug;
 var log;
 
-instance.prototype.NOTIONINFO = {
-	active: false,
-	databaseId: '',
-	startTime:0
-}
-
 function instance(system, id, config) {
 	var self = this;
 
@@ -16,6 +10,10 @@ function instance(system, id, config) {
 
 	return self;
 }
+
+instance.prototype.NOTIONINFO_ACTIVE = false;
+instance.prototype.NOTIONINFO_DATABASEID = '';
+instance.prototype.NOTIONINFO_START_TIME = 0;
 
 instance.prototype.updateConfig = function(config) {
 	var self = this;
@@ -130,14 +128,14 @@ instance.prototype.action = function(action) {
 
 instance.prototype.createMessage = function(rightNow, isoDate, message) {
 	let self = this;
-	if(self.NOTIONINFO.active === false) {
+	if(self.NOTIONINFO_ACTIVE === false) {
 		return;
 	}
-	if(self.NOTIONINFO.startTime === 0) {
-		self.NOTIONINFO.startTime = rightNow;
+	if(self.NOTIONINFO_START_TIME === 0) {
+		self.NOTIONINFO_START_TIME = rightNow;
 	}
 
-	const elapsedTime = rightNow - self.NOTIONINFO.startTime;
+	const elapsedTime = rightNow - self.NOTIONINFO_START_TIME;
 	let timestampFmt = "";
 	if(elapsedTime > 3600000) {
 		timestampFmt = new Date(elapsedTime).toISOString().substring(11, 19);		
@@ -147,7 +145,7 @@ instance.prototype.createMessage = function(rightNow, isoDate, message) {
 
 	body = JSON.stringify({
 		parent: {
-			database_id: self.NOTIONINFO.databaseId
+			database_id: self.NOTIONINFO_DATABASEID
 		},
 		properties: {
 			message: {
@@ -185,7 +183,7 @@ instance.prototype.createMessage = function(rightNow, isoDate, message) {
 instance.prototype.startSession = function(rightNow, isoDate, autoCreateStartRecord, databaseName) {
 	let self = this;
 
-	if(self.NOTIONINFO.active === true) {
+	if(self.NOTIONINFO_ACTIVE === true) {
 		self.stopSession(rightNow,isoDate);
 	}
 
@@ -231,9 +229,9 @@ instance.prototype.startSession = function(rightNow, isoDate, autoCreateStartRec
 instance.prototype.stopSession = function(rightNow, isoDate) {
 	let self = this;
 	self.createMessage(rightNow, isoDate, 'stop');
-	self.NOTIONINFO.active = false;
-	self.NOTIONINFO.databaseId = '';
-	self.NOTIONINFO.startTime = 0;
+	self.NOTIONINFO_ACTIVE = false;
+	self.NOTIONINFO_DATABASEID = '';
+	self.NOTIONINFO_START_TIME = 0;
 }
 
 instance.prototype.doRestCall = function(notionUrl, body, rightNow, isoDate, autoCreateStartRecord) {
@@ -251,11 +249,11 @@ instance.prototype.doRestCall = function(notionUrl, body, rightNow, isoDate, aut
 			self.log('error',result.data.code + ' ' + result.data.message)
 			self.status(self.STATUS_ERROR, result.data.status);
 		} else if(result.data.object === 'database') {
-			self.NOTIONINFO.active = true;
-			self.NOTIONINFO.databaseId = result.data.id;
+			self.NOTIONINFO_ACTIVE = true;
+			self.NOTIONINFO_DATABASEID = result.data.id;
 			self.status(self.STATUS_OK);
 			if(autoCreateStartRecord === true) {
-				self.NOTIONINFO.startTime = rightNow;
+				self.NOTIONINFO_START_TIME = rightNow;
 				self.createMessage(rightNow, isoDate, 'start');
 			}
 		} else {
