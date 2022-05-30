@@ -78,6 +78,12 @@ instance.prototype.actions = function(system) {
 			label: 'Start a Session',
 			options: [
 				{
+					type: 'textinput',
+					label: 'Database Name',
+					id: 'databaseName',
+					default: ''
+				},
+				{
 					type: 'checkbox',
 					id: 'autoCreateStartRecord',
 					label: 'Automatically create start record?',
@@ -109,7 +115,7 @@ instance.prototype.action = function(action) {
 	
 	switch(action.action) {
 		case 'startSession':
-			self.startSession(rightNow, isoDate, action.options.autoCreateStartRecord);
+			self.startSession(rightNow, isoDate, action.options.autoCreateStartRecord, action.options.databaseName);
 			break;
 		case 'stopSession':
 			self.stopSession(rightNow, isoDate);
@@ -176,13 +182,19 @@ instance.prototype.createMessage = function(rightNow, isoDate, message) {
 	self.doRestCall('https://api.notion.com/v1/pages',body, rightNow, isoDate, false);
 }
 
-instance.prototype.startSession = function(rightNow, isoDate, autoCreateStartRecord) {
+instance.prototype.startSession = function(rightNow, isoDate, autoCreateStartRecord, databaseName) {
 	let self = this;
 
 	if(self.NOTIONINFO.active === true) {
 		self.stopSession(rightNow,isoDate);
 	}
+
+  let dbname = databaseName.trim();
 	
+	if(dbname === '') {
+		dbname = isoDate;
+	}
+
 	body = JSON.stringify({
 		parent: {
 			type:"page_id",
@@ -191,7 +203,7 @@ instance.prototype.startSession = function(rightNow, isoDate, autoCreateStartRec
 		title:[{
 			type:"text",
 			text:{
-				content:isoDate
+				content:dbname
 			}
 		}],
 		properties: {
