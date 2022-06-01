@@ -136,10 +136,13 @@ instance.prototype.createMessage = function(rightNow, isoDate, message) {
 	}
 
 	const elapsedTime = rightNow - self.NOTIONINFO_START_TIME;
-	const totalSeconds = Math.round(elapsedTime / 1000);
-	const hours = Math.floor(totalSeconds / 3600);
-	const minutes = Math.floor(totalSeconds / 60);
-	const seconds = totalSeconds % 60;
+	let seconds = Math.floor(elapsedTime / 1000);
+	let minutes = Math.floor(seconds / 60);
+	let hours = Math.floor(minutes / 60);
+
+	seconds = seconds % 60;
+	minutes = minutes % 60;
+
 	let timestampFmt = "";
 	if(hours !== 0) {
 		timestampFmt = hours.toString().padStart(2,'0')+":"+minutes.toString().padStart(2,'0')+":"+seconds.toString().padStart(2,'0');		
