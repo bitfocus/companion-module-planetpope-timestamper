@@ -136,13 +136,17 @@ instance.prototype.createMessage = function(rightNow, isoDate, message) {
 	}
 
 	const elapsedTime = rightNow - self.NOTIONINFO_START_TIME;
+	const totalSeconds = Math.round(elapsedTime / 1000);
+	const hours = Math.floor(totalSeconds / 3600);
+	const minutes = Math.floor(totalSeconds / 60);
+	const seconds = totalSeconds % 60;
 	let timestampFmt = "";
-	if(elapsedTime > 3600000) {
-		timestampFmt = new Date(elapsedTime).toISOString().substring(11, 19);		
+	if(hours !== 0) {
+		timestampFmt = hours.toString().padStart(2,'0')+":"+minutes.toString().padStart(2,'0')+":"+seconds.toString().padStart(2,'0');		
 	} else {
-		timestampFmt = new Date(elapsedTime).toISOString().substring(14, 19);
+		timestampFmt = minutes.toString().padStart(2,'0')+":"+seconds.toString().padStart(2,'0');
 	}
-
+	
 	body = JSON.stringify({
 		parent: {
 			database_id: self.NOTIONINFO_DATABASEID
