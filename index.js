@@ -65,6 +65,11 @@ instance.prototype.config_fields = function () {
 // When module gets deleted
 instance.prototype.destroy = function() {
 	var self = this;
+	if(self.NOTIONINFO_ACTIVE === true) {
+		const rightNow = Date.now();
+		const isoDate = new Date(rightNow).toISOString();
+		self.createMessage(rightNow, isoDate,'stopped during destroy',Error().stack);	
+	}
 	debug("destroy");
 }
 
@@ -119,14 +124,14 @@ instance.prototype.action = function(action) {
 			self.stopSession(rightNow, isoDate);
 			break;
 		case 'createMarker':
-			self.createMessage(rightNow, isoDate, action.options.message.trim());
+			self.createMessage(rightNow, isoDate, action.options.message.trim(),'');
 			break;
 		default:
 			break;
 	};
 }
 
-instance.prototype.createMessage = function(rightNow, isoDate, message) {
+instance.prototype.createMessage = function(rightNow, isoDate, message, logDetails) {
 	let self = this;
 	if(self.NOTIONINFO_ACTIVE === false) {
 		return;
@@ -181,6 +186,13 @@ instance.prototype.createMessage = function(rightNow, isoDate, message) {
 						content: timestampFmt
 					}
 				}]
+			},
+			loggingDetails: {
+				rich_text:[{
+					text: {
+						content: logDetails
+					}
+				}]
 			}
 		}
 	});
@@ -227,6 +239,9 @@ instance.prototype.startSession = function(rightNow, isoDate, autoCreateStartRec
 			},
 			createTime: {
 				created_time:{}
+			},
+			loggingDetails: {
+				rich_text:{}
 			}
 		}
 	});
@@ -235,7 +250,7 @@ instance.prototype.startSession = function(rightNow, isoDate, autoCreateStartRec
 
 instance.prototype.stopSession = function(rightNow, isoDate) {
 	let self = this;
-	self.createMessage(rightNow, isoDate, 'stop');
+	self.createMessage(rightNow, isoDate, 'stop', '');
 	self.NOTIONINFO_ACTIVE = false;
 	self.NOTIONINFO_DATABASEID = '';
 	self.NOTIONINFO_START_TIME = 0;
@@ -261,7 +276,7 @@ instance.prototype.doRestCall = function(notionUrl, body, rightNow, isoDate, aut
 			self.status(self.STATUS_OK);
 			if(autoCreateStartRecord === true) {
 				self.NOTIONINFO_START_TIME = rightNow;
-				self.createMessage(rightNow, isoDate, 'start');
+				self.createMessage(rightNow, isoDate, 'start', '');
 			}
 		} else {
 			self.status(self.STATUS_OK);
